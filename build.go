@@ -81,7 +81,7 @@ func convertFileToHTML(filePath string, outputPath string) {
 	p := parser.NewWithExtensions(extensions)
 	doc := p.Parse(contents)
 
-	str := gohtml.Format(UseTemplate("index", Traverse(doc)))
+	str := gohtml.Format(UseTemplate("unnamed", outputPath, Traverse(doc)))
 
 	file, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
@@ -94,7 +94,9 @@ func convertFileToHTML(filePath string, outputPath string) {
 	file.WriteString(str)
 }
 
-func UseTemplate(title string, content string) string {
+func UseTemplate(title string, path string, content string) string {
+	rootPath := "./test-site/out/" // should be ./out/ later
+
 	contents, err := os.ReadFile("res/default_template.html")
 	if err != nil {
 		fmt.Println("ERROR: Failed to open default template file")
@@ -107,17 +109,44 @@ func UseTemplate(title string, content string) string {
 	config := ReadConfig()
 	output = strings.ReplaceAll(output, "{{SITE-TITLE}}", config.Name)
 
-	makeNavElement := func(element SiteConfigNavElement) string {
-		return fmt.Sprintf("<li><a href=\"%s\">%s</a></li>", element.Href, element.Title)
+	makeNavElement := func(title string, href string) string {
+		return fmt.Sprintf("<li><a href=\"%s\">%s</a></li>", href, title)
 	}
+
+	effectivePath := strings.TrimPrefix(path, rootPath)
 
 	navElementString := ""
 	for i := 0; i < len(config.NavElements); i++ {
-		navElementString += makeNavElement(config.NavElements[i])
+		// Get the relative path from the current file to the one in the nav element
+		relativeHref, _ := filepath.Rel(effectivePath, config.NavElements[i].Href)
+		relativeHref = strings.TrimPrefix(relativeHref, "../")
+		relativeHref = strings.TrimSuffix(relativeHref, ".")
+
+		navElementString += makeNavElement(config.NavElements[i].Title, relativeHref)
 	}
 	output = strings.ReplaceAll(output, "{{NAV-ELEMENTS}}", navElementString)
 
 	return output
+}
+
+func uniquePath(from string, to string) (string, error) {
+	// Get the relative path
+	rel, err := filepath.Rel(from, to)
+	if err != nil {
+		return "", err
+	}
+
+	// Check if the relative path is just ".." or deeper
+	if strings.HasPrefix(rel, "..") {
+		return rel, nil
+	}
+
+	// If it's a deeper path, return the unique part of `to`
+	commonPath := filepath.Dir(from)
+	uniquePart := strings.TrimPrefix(to, commonPath)
+	uniquePart = strings.TrimPrefix(uniquePart, string(filepath.Separator)) // Remove leading separator
+
+	return uniquePart, nil
 }
 
 func Traverse(node ast.Node) string {

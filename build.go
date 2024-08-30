@@ -70,18 +70,68 @@ func BuildProject() {
 	fmt.Println("Project successfully built, see out/")
 }
 
-func convertFileToHTML(filePath string, outputPath string) {
-	contents, err := os.ReadFile(filePath)
+func convertFileToHTML(inputPath string, outputPath string) {
+	contents, err := os.ReadFile(inputPath)
 	if err != nil {
-		fmt.Printf("ERROR: Failed to read %s\n", filePath)
+		fmt.Printf("ERROR: Failed to read %s\n", inputPath)
 		return
+	}
+
+	// parse metadata and remove metadata
+	var metadata []MetadataEntry
+
+	if string(contents[:4]) == "---\n" {
+		charsToRemove := 4
+		lines := strings.Split(string(contents), "\n")
+
+		foundEnd := false
+		for i := 1; i < len(lines); i++ {
+			if foundEnd {
+				if lines[i] == "" {
+					charsToRemove += 1
+					continue
+				}
+				break
+			}
+			charsToRemove += len(lines[i]) + 1
+			if lines[i] == "---" {
+				foundEnd = true
+				continue
+			}
+
+			// parse a line of metadata
+			numColons := strings.Count(lines[i], ":")
+
+			if numColons != 1 {
+				fmt.Println("ERROR: Incorrect markdown metadata, found multiple colons ore none on same line")
+				return
+			}
+
+			// temporary naive metadata key/value parsing
+			segs := strings.Split(lines[i], ":")
+			metadata = append(metadata, MetadataEntry{strings.TrimSpace(segs[0]), strings.TrimSpace(segs[1])})
+		}
+
+		contents = contents[charsToRemove:]
+	}
+
+	_, pageName := filepath.Split(inputPath)
+	pageName = pageName[:len(pageName)-3]
+
+	// Do stuff with the metadata here
+	if len(metadata) != 0 {
+		for i := 0; i < len(metadata); i++ {
+			if metadata[i].key == "name" {
+				pageName = metadata[i].value
+			}
+		}
 	}
 
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
 	p := parser.NewWithExtensions(extensions)
 	doc := p.Parse(contents)
 
-	str := gohtml.Format(UseTemplate("unnamed", outputPath, Traverse(doc)))
+	str := gohtml.Format(UseTemplate(pageName, outputPath, Traverse(doc)))
 
 	file, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {

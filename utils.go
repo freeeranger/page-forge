@@ -17,6 +17,11 @@ type SiteConfig struct {
 	NavElements []SiteConfigNavElement `json:"nav-elements"`
 }
 
+type MetadataEntry struct {
+	key   string
+	value string
+}
+
 func ReadConfig() SiteConfig {
 	rootPath := "./test-site"
 

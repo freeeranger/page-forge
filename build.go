@@ -129,26 +129,6 @@ func UseTemplate(title string, path string, content string) string {
 	return output
 }
 
-func uniquePath(from string, to string) (string, error) {
-	// Get the relative path
-	rel, err := filepath.Rel(from, to)
-	if err != nil {
-		return "", err
-	}
-
-	// Check if the relative path is just ".." or deeper
-	if strings.HasPrefix(rel, "..") {
-		return rel, nil
-	}
-
-	// If it's a deeper path, return the unique part of `to`
-	commonPath := filepath.Dir(from)
-	uniquePart := strings.TrimPrefix(to, commonPath)
-	uniquePart = strings.TrimPrefix(uniquePart, string(filepath.Separator)) // Remove leading separator
-
-	return uniquePart, nil
-}
-
 func Traverse(node ast.Node) string {
 	var buf bytes.Buffer
 

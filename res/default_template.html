@@ -15,6 +15,11 @@
             margin-left: 1rem !important;
         }
 
+        ol {
+            list-style-type: decimal !important;
+            margin-left: 1rem !important;
+        }
+
         .code-block {
             padding: 1rem;
             border-radius: 0.5rem;
@@ -47,12 +52,13 @@
 
         .block-quote {
             position: relative;
-            padding-left: 1rem;
+            padding-left: 0.75rem;
             margin-top: 0.5rem;
             margin-bottom: 0.5rem;
         }
 
         .block-quote::before {
+            margin-left: 0.25rem;
             width: 0.2rem;
             height: 100%;
             position: absolute;
@@ -61,6 +67,10 @@
             color: black;
             content: "";
             background: #959595;
+        }
+
+        .nav-active {
+            font-weight: bold;
         }
     </style>
     <script>
@@ -74,19 +84,19 @@
 </head>
 
 <body class="flex flex-col min-h-screen">
-    <div class="bg-black text-white flex w-full h-16 items-center justify-between px-16 mb-4">
+    <div class="bg-black text-white flex w-full h-16 items-center justify-between px-16 mb-4 shadow-md">
         <h2 class="font-bold text-xl">{{SITE-TITLE}}</h2>
         <ul class="flex gap-4 items-center !list-none !m-0">
             {{NAV-ELEMENTS}}
         </ul>
     </div>
 
-    <div class="grow py-8 px-24">
+    <div class="grow py-8 px-8 md:px-16 lg:px-24">
         <h2 class="text-4xl font-bold mb-8">{{PAGE-TITLE}}</h2>
         {{CONTENT}}
     </div>
 
-    <div class="bg-black text-white w-full h-32 flex flex-col items-center justify-center px-16 py-6">
+    <div class="bg-black text-white w-full h-32 flex flex-col items-center justify-center px-16 py-4">
         <h2 class="font-bold text-xl mb-4">{{SITE-TITLE}}</h2>
         <ul class="flex gap-4 text-sm !list-none !m-0">
             {{NAV-ELEMENTS}}

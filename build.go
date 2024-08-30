@@ -110,7 +110,11 @@ func UseTemplate(title string, path string, content string) string {
 	output = strings.ReplaceAll(output, "{{SITE-TITLE}}", config.Name)
 
 	makeNavElement := func(title string, href string) string {
-		return fmt.Sprintf("<li><a href=\"%s\">%s</a></li>", href, title)
+		class := ""
+		if href == "" {
+			class = "nav-active"
+		}
+		return fmt.Sprintf("<li><a href=\"%s\" class=\"%s\">%s</a></li>", href, class, title)
 	}
 
 	effectivePath := strings.TrimPrefix(path, rootPath)

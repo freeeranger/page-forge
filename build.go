@@ -100,29 +100,31 @@ func convertFileToHTML(inputPath string, outputPath string) {
 			}
 
 			// parse a line of metadata
-			numColons := strings.Count(lines[i], ":")
-
-			if numColons != 1 {
-				fmt.Println("ERROR: Incorrect markdown metadata, found multiple colons ore none on same line")
+			if strings.Count(lines[i], ":") == 0 {
+				fmt.Println("ERROR: Incorrect metadata key, no value found")
 				return
 			}
 
 			// temporary naive metadata key/value parsing
-			segs := strings.Split(lines[i], ":")
+			segs := strings.SplitN(lines[i], ":", 2)
 			metadata = append(metadata, MetadataEntry{strings.TrimSpace(segs[0]), strings.TrimSpace(segs[1])})
 		}
 
 		contents = contents[charsToRemove:]
 	}
 
-	_, pageName := filepath.Split(inputPath)
-	pageName = pageName[:len(pageName)-3]
+	_, pageTitle := filepath.Split(inputPath)
+	pageTitle = pageTitle[:len(pageTitle)-3]
+
+	pageSubtitle := ""
 
 	// Do stuff with the metadata here
 	if len(metadata) != 0 {
 		for i := 0; i < len(metadata); i++ {
-			if metadata[i].key == "name" {
-				pageName = metadata[i].value
+			if metadata[i].key == "title" {
+				pageTitle = metadata[i].value
+			} else if metadata[i].key == "subtitle" {
+				pageSubtitle = metadata[i].value
 			}
 		}
 	}
@@ -131,7 +133,7 @@ func convertFileToHTML(inputPath string, outputPath string) {
 	p := parser.NewWithExtensions(extensions)
 	doc := p.Parse(contents)
 
-	str := gohtml.Format(UseTemplate(pageName, outputPath, Traverse(doc)))
+	str := gohtml.Format(UseTemplate(pageTitle, pageSubtitle, outputPath, Traverse(doc)))
 
 	file, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
@@ -144,7 +146,7 @@ func convertFileToHTML(inputPath string, outputPath string) {
 	file.WriteString(str)
 }
 
-func UseTemplate(title string, path string, content string) string {
+func UseTemplate(title string, subtitle string, path string, content string) string {
 	rootPath := "./test-site/out/" // should be ./out/ later
 
 	contents, err := os.ReadFile("res/default_template.html")
@@ -154,6 +156,7 @@ func UseTemplate(title string, path string, content string) string {
 	}
 	output := string(contents)
 	output = strings.ReplaceAll(output, "{{PAGE-TITLE}}", title)
+	output = strings.ReplaceAll(output, "{{PAGE-SUBTITLE}}", subtitle)
 	output = strings.ReplaceAll(output, "{{CONTENT}}", content)
 
 	config := ReadConfig()

@@ -14,6 +14,7 @@ type SiteConfigNavElement struct {
 
 type SiteConfig struct {
 	Name        string                 `json:"name"`
+	Theme       string                 `json:"theme"`
 	NavElements []SiteConfigNavElement `json:"nav-elements"`
 }
 

@@ -147,9 +147,21 @@ func convertFileToHTML(inputPath string, outputPath string) {
 }
 
 func UseTemplate(title string, subtitle string, path string, content string) string {
+	siteRootPath := "./test-site"  // TODO fix this too this is messy as fuck
 	rootPath := "./test-site/out/" // should be ./out/ later
 
-	contents, err := os.ReadFile("res/default_template.html")
+	config := ReadConfig()
+
+	themePath := ""
+
+	switch config.Theme {
+	case "default":
+		themePath = "res/default_template.html"
+	default:
+		themePath = fmt.Sprintf("%s/themes/%s", siteRootPath, config.Theme)
+	}
+
+	contents, err := os.ReadFile(themePath)
 	if err != nil {
 		fmt.Println("ERROR: Failed to open default template file")
 		return ""
@@ -159,7 +171,6 @@ func UseTemplate(title string, subtitle string, path string, content string) str
 	output = strings.ReplaceAll(output, "{{PAGE-SUBTITLE}}", subtitle)
 	output = strings.ReplaceAll(output, "{{CONTENT}}", content)
 
-	config := ReadConfig()
 	output = strings.ReplaceAll(output, "{{SITE-TITLE}}", config.Name)
 
 	makeNavElement := func(title string, href string) string {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,10 +13,11 @@ import (
 	"github.com/yosssi/gohtml"
 )
 
+//go:embed res/default_template.html
+var defaultTemplateContents string
+
 func BuildProject() {
 	fmt.Println("Building project...")
-
-	rootPath := "./test-site" // temporary, should just be . later
 
 	if len(os.Args) != 2 {
 		fmt.Println("Usage: page-forge build")
@@ -27,7 +29,7 @@ func BuildProject() {
 	}
 
 	// Clear out dir
-	outDirPath := fmt.Sprintf("%s/out", rootPath)
+	outDirPath := fmt.Sprintf("./out")
 	if _, err := os.Stat(outDirPath); !os.IsNotExist(err) {
 		if err = os.RemoveAll(outDirPath); err != nil {
 			fmt.Println("ERROR: Failed to clear out directory")
@@ -37,7 +39,7 @@ func BuildProject() {
 	os.Mkdir(outDirPath, 0755)
 
 	// Convert all files to html
-	err := filepath.Walk(fmt.Sprintf("%s/pages", rootPath), func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(fmt.Sprintf("./pages"), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -55,7 +57,7 @@ func BuildProject() {
 			return nil
 		}
 
-		outputPath := fmt.Sprintf("%s\n", fmt.Sprintf("%s/out/%s", rootPath, fragments[len(fragments)-1]))
+		outputPath := fmt.Sprintf("%s\n", fmt.Sprintf("./out/%s", fragments[len(fragments)-1]))
 		outputPath = outputPath[:len(outputPath)-4] + ".html"
 		convertFileToHTML(path, outputPath)
 
@@ -147,26 +149,25 @@ func convertFileToHTML(inputPath string, outputPath string) {
 }
 
 func UseTemplate(title string, subtitle string, path string, content string) string {
-	siteRootPath := "./test-site"  // TODO fix this too this is messy as fuck
-	rootPath := "./test-site/out/" // should be ./out/ later
-
 	config := ReadConfig()
 
 	themePath := ""
 
+	output := ""
 	switch config.Theme {
 	case "default":
-		themePath = "res/default_template.html"
+		output = defaultTemplateContents
 	default:
-		themePath = fmt.Sprintf("%s/themes/%s", siteRootPath, config.Theme)
+		themePath = fmt.Sprintf("./themes/%s", config.Theme)
+
+		contents, err := os.ReadFile(themePath)
+		if err != nil {
+			fmt.Println("ERROR: Failed to open default template file")
+			return ""
+		}
+		output = string(contents)
 	}
 
-	contents, err := os.ReadFile(themePath)
-	if err != nil {
-		fmt.Println("ERROR: Failed to open default template file")
-		return ""
-	}
-	output := string(contents)
 	output = strings.ReplaceAll(output, "{{PAGE-TITLE}}", title)
 	output = strings.ReplaceAll(output, "{{PAGE-SUBTITLE}}", subtitle)
 	output = strings.ReplaceAll(output, "{{CONTENT}}", content)
@@ -181,7 +182,7 @@ func UseTemplate(title string, subtitle string, path string, content string) str
 		return fmt.Sprintf("<li><a href=\"%s\" class=\"%s\">%s</a></li>", href, class, title)
 	}
 
-	effectivePath := strings.TrimPrefix(path, rootPath)
+	effectivePath := strings.TrimPrefix(path, "./out/")
 
 	navElementString := ""
 	for i := 0; i < len(config.NavElements); i++ {

@@ -24,9 +24,7 @@ type MetadataEntry struct {
 }
 
 func ReadConfig() SiteConfig {
-	rootPath := "./test-site"
-
-	siteConfigFile, err := os.Open(fmt.Sprintf("%s/site.json", rootPath))
+	siteConfigFile, err := os.Open(fmt.Sprintf("site.json"))
 	if err != nil {
 		fmt.Println("ERROR: Failed to open site.json")
 	}

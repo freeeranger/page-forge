@@ -6,17 +6,10 @@ import (
 )
 
 func validateProject() bool {
-	path := "./test-site" // temporary, should just be . later
-
-	// Validate project path
-	info, err := os.Stat(path)
-	if err != nil || !info.IsDir() {
-		fmt.Println("ERROR: Path does not exist")
-		return false
-	}
+	path := "."
 
 	// Validate site.json
-	info, err = os.Stat(fmt.Sprintf("%s/site.json", path))
+	info, err := os.Stat(fmt.Sprintf("%s/site.json", path))
 	if err != nil || info.IsDir() {
 		fmt.Println("ERROR: site.json does not exist")
 		return false

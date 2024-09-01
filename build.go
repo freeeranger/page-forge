@@ -81,8 +81,7 @@ func convertFileToHTML(inputPath string, outputPath string) {
 
 	// parse metadata and remove it from the contents string
 	var metadata []MetadataEntry
-
-	if strings.TrimSpace(string(contents[:4])) == "---\n" {
+	if strings.TrimSpace(string(contents[:4])) == "---" {
 		charsToRemove := 4
 		lines := strings.Split(string(contents), "\n")
 
@@ -114,7 +113,6 @@ func convertFileToHTML(inputPath string, outputPath string) {
 			segs := strings.SplitN(lines[i], ":", 2)
 			metadata = append(metadata, MetadataEntry{strings.TrimSpace(segs[0]), strings.TrimSpace(segs[1])})
 		}
-
 		contents = contents[charsToRemove:]
 	}
 
@@ -142,7 +140,7 @@ func convertFileToHTML(inputPath string, outputPath string) {
 
 	file, err := os.OpenFile(outputPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 	if err != nil {
-		fmt.Println("Failed to write to html file")
+		fmt.Println("ERROR: Failed to write to html file")
 		return
 	}
 
@@ -165,7 +163,7 @@ func UseTemplate(title string, subtitle string, path string, content string) str
 
 		contents, err := os.ReadFile(themePath)
 		if err != nil {
-			fmt.Println("ERROR: Failed to open default template file")
+			fmt.Printf("ERROR: Failed to open template file %s\n", config.Theme)
 			return ""
 		}
 		output = string(contents)
@@ -174,15 +172,10 @@ func UseTemplate(title string, subtitle string, path string, content string) str
 	output = strings.ReplaceAll(output, "{{PAGE-TITLE}}", title)
 	output = strings.ReplaceAll(output, "{{PAGE-SUBTITLE}}", subtitle)
 	output = strings.ReplaceAll(output, "{{CONTENT}}", content)
-
 	output = strings.ReplaceAll(output, "{{SITE-TITLE}}", config.Name)
 
 	makeNavElement := func(title string, href string) string {
-		class := ""
-		if href == "" {
-			class = "nav-active"
-		}
-		return fmt.Sprintf("<li><a href=\"%s\" class=\"%s\">%s</a></li>", href, class, title)
+		return fmt.Sprintf("<li><a href=\"%s\" class=\"%s\">%s</a></li>", href, If(href == "", "nav-active", ""), title)
 	}
 
 	effectivePath := strings.TrimPrefix(path, "./out/")
@@ -275,12 +268,8 @@ func InsertAdvancedHTMLElement(n ast.Node, openingTag string, closingTag string)
 }
 
 func InsertHTMLElement(n ast.Node, tag string) string {
-	openingTag := ""
-	closingTag := ""
-	if tag != "" {
-		openingTag = fmt.Sprintf("<%s>", tag)
-		closingTag = fmt.Sprintf("</%s>", tag)
-	}
+	openingTag := If(tag == "", "", fmt.Sprintf("<%s>", tag))
+	closingTag := If(tag == "", "", fmt.Sprintf("</%s>", tag))
 
 	return InsertAdvancedHTMLElement(n, openingTag, closingTag)
 }

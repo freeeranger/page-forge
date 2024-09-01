@@ -79,24 +79,27 @@ func convertFileToHTML(inputPath string, outputPath string) {
 		return
 	}
 
-	// parse metadata and remove metadata
+	// parse metadata and remove it from the contents string
 	var metadata []MetadataEntry
 
-	if string(contents[:4]) == "---\n" {
+	if strings.TrimSpace(string(contents[:4])) == "---\n" {
 		charsToRemove := 4
 		lines := strings.Split(string(contents), "\n")
 
 		foundEnd := false
 		for i := 1; i < len(lines); i++ {
+			trimmedLine := strings.TrimSpace(lines[i])
 			if foundEnd {
-				if lines[i] == "" {
+				if trimmedLine == "" { // remove all empty lines after the closing of the metadata
 					charsToRemove += 1
 					continue
 				}
 				break
 			}
+
 			charsToRemove += len(lines[i]) + 1
-			if lines[i] == "---" {
+
+			if trimmedLine == "---" { // found the second --- (closing metadata section)
 				foundEnd = true
 				continue
 			}
